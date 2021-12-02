@@ -2,23 +2,30 @@ package com.javarush.games.game2048;
 
 import com.javarush.engine.cell.Color;
 import com.javarush.engine.cell.Game;
+import com.javarush.engine.cell.Key;
 
 import java.util.Arrays;
 
 public class Game2048 extends Game {
     private static final int SIDE = 4;
+    private boolean isGameStopped = false;
+    private int score = 0;
 
     private int[][] gameField = new int[SIDE][SIDE];
 
     public void initialize(){
-        setScreenSize(SIDE, SIDE);
+
+        setScreenSize(SIDE, SIDE);setScore(0);
         createGame();
         drawScene();
     }
 
     private void createGame(){
-      createNewNumber();
-      createNewNumber();
+        setScore(0);
+        gameField = new int[SIDE][SIDE];
+        createNewNumber();
+        createNewNumber();
+
     }
 
     private void drawScene(){
@@ -31,6 +38,9 @@ public class Game2048 extends Game {
     }
 
     private void createNewNumber(){
+
+        if(getMaxTileValue() == 2048) win();
+
         int y = 0;
         int x = 0;
         while (true){
@@ -40,6 +50,7 @@ public class Game2048 extends Game {
     }
         int cifra = getRandomNumber(10);
         gameField[y][x] = cifra == 9 ? 4  : 2;
+
     }
 
     private void setCellColoredNumber(int x,int y,int value){
@@ -55,7 +66,7 @@ public class Game2048 extends Game {
     }
 
     private Color getColorByValue(int value){
-         Color cell = null;
+        Color cell = null;
         switch (value)
         {
             case 0: { cell = Color.WHITE;break;}
@@ -94,9 +105,160 @@ public class Game2048 extends Game {
         for(int i = 0; i < row.length - 1; i++) {
             if(row[i] != 0 && row[i] == row[i + 1]) {
                 row[i] = row[i] + row[i + 1];
+                score += row[i];
+                setScore(score);
                 row [i + 1] = 0;
             }
         }
         return !Arrays.equals(row, clone);
     }
+
+    @Override
+    public void onKeyPress(Key key) {
+
+        if(!canUserMove()) {gameOver();return;}
+        if(key != Key.SPACE && isGameStopped == true) return;
+        switch (key){
+            case LEFT:{moveLeft();drawScene();break;}
+            case RIGHT:{moveRight();drawScene();break;}
+            case UP:{moveUp();drawScene();break;}
+            case DOWN:{moveDown();drawScene();break;}
+            case SPACE:{
+                isGameStopped = false;
+                createGame();
+                drawScene();
+                break;}
+        }
+    }
+
+    private void moveLeft(){
+        boolean compressRow = false;
+        boolean mergeRow = false;
+
+        for (int i = 0; i < gameField[0].length; i++) {
+            if (compressRow(gameField[i])) {
+                compressRow = true;
+            }
+            if (mergeRow(gameField[i])) {
+                mergeRow = true;
+            }
+            if (compressRow(gameField[i])) {
+                compressRow = true;
+            }
+
+        } if (compressRow || mergeRow) {
+            createNewNumber();
+        }
+
+    }
+
+    private void moveRight(){
+        rotateClockwise();
+        rotateClockwise();
+        moveLeft();
+        rotateClockwise();
+        rotateClockwise();
+
+
+    }
+
+    private void moveUp(){
+        rotateClockwise();
+        rotateClockwise();
+        rotateClockwise();
+        moveLeft();
+        rotateClockwise();
+    }
+
+    private void moveDown(){
+        rotateClockwise();
+        moveLeft();
+        rotateClockwise();
+        rotateClockwise();
+        rotateClockwise();
+    }
+
+    private void rotateClockwise(){
+//        int SIDE = 4;
+//        int[][] gameField = {{1,2,3,4},{5,6,7,8},{9,10,11,12},{13,14,15,16}};
+//        print(gameField);
+        int[][] rotate = new int[SIDE][SIDE];
+        int[] temp = new int[SIDE];
+
+        for (int i = 0; i < SIDE; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                rotate[i][j] = gameField[i][j];
+            }
+        }
+        for (int i = 0; i < rotate[0].length; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                temp[j] = rotate[i][j];
+            }
+
+            for (int k = 0; k < SIDE; k++) {
+                gameField[k][SIDE -1 - i] = temp[k];
+            }
+        }
+
+    }
+
+    private int getMaxTileValue(){
+        int max = 0;
+        for (int i = 0; i < SIDE; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                if(gameField[i][j] > max) max = gameField[i][j];
+            }
+        }
+        return max;
+    }
+
+    private void win(){
+        isGameStopped = true;
+        showMessageDialog(Color.RED,"Вы выграли", Color.BLUE, 50);
+    }
+
+    private boolean canUserMove() {
+        boolean zeroMatrix = false;
+        boolean maybeSum = false;
+        for (int i = 0; i < SIDE; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                if (gameField[i][j] == 0) zeroMatrix = true;
+            }
+        }
+
+
+        int[] temp = new int[SIDE];
+
+
+        for (int i = 0; i < gameField[0].length; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                temp[j] = gameField[i][j];
+            }
+            for (int k = 0; k < temp.length -1; k++) {
+                if(temp[k] == temp[k +1]) maybeSum = true;
+            }
+        }
+        for (int i = 0; i < gameField[0].length; i++) {
+            for (int j = 0; j < SIDE; j++) {
+                temp[j] = gameField[j][i];
+            }
+            for (int k = 0; k < temp.length -1; k++) {
+                if(temp[k] == temp[k +1]) maybeSum = true;
+            }
+        }
+        if(zeroMatrix) return true;
+        else if (maybeSum) return true;else return false;
+
+        
+    }
+
+    private void gameOver(){
+        isGameStopped = true;
+        showMessageDialog(Color.RED, "Game Over", Color.AQUA, 50);
+    }
+
+     public void setScore(int score){
+        this.score = score;
+    }
+
 }
