@@ -21,7 +21,10 @@ public class EnemyFleet {
      }
 
      private void createShips(){
+         Boss boss =  new Boss(STEP * COLUMNS_COUNT / 2 - ShapeMatrix.BOSS_ANIMATION_FIRST.length / 2 - 1 , 5);
+
          ships =  new ArrayList<EnemyShip>();
+         ships.add(boss);
           for (int i = 0; i < COLUMNS_COUNT; i++) {
                for (int j = 0; j < ROWS_COUNT; j++) {
                     ships.add(new EnemyShip(i*STEP,j*STEP +12));
@@ -89,15 +92,19 @@ public class EnemyFleet {
 
      }
 
-     public void verifyHit(List<Bullet> bullets){
-         for (Ship el:ships){
+     public int verifyHit(List<Bullet> bullets){
+         if(bullets.isEmpty()) return 0;
+         int max = 0;
+         for (EnemyShip el:ships){
              for (Bullet element:bullets){
                  if(el.isCollision(element) && el.isAlive && element.isAlive){
                      el.kill();
                      element.kill();
+                     max += el.score;
                  }
              }
          }
+         return max;
      }
 
      public void deleteHiddenShips(){
@@ -107,5 +114,22 @@ public class EnemyFleet {
              if(ship.isVisible() == false) iterator.remove();
          }
      }
+
+     public double getBottomBorder(){
+         double max = 0;
+         for (EnemyShip el:ships){
+
+             if(max < el.y + el.height) max = el.y + el.height;
+         }
+         return  max;
+     }
+
+     public int getShipsCount(){
+         return ships.size();
+     }
+
+
+
+
 
 }

@@ -54,11 +54,15 @@ public class PlayerShip extends Ship{
         }
     }
 
+    public void win(){
+        setStaticView(ShapeMatrix.WIN_PLAYER);
+    }
+
     @Override
     public void kill() {
         if(!this.isAlive) return;
         isAlive = false;
-        super.setAnimatedView(ShapeMatrix.KILL_PLAYER_ANIMATION_FIRST,
+        super.setAnimatedView(false, ShapeMatrix.KILL_PLAYER_ANIMATION_FIRST,
                 ShapeMatrix.KILL_PLAYER_ANIMATION_SECOND,
                 ShapeMatrix.KILL_PLAYER_ANIMATION_THIRD, ShapeMatrix.DEAD_PLAYER);
     }
